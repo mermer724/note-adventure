@@ -1,0 +1,5 @@
+Bravura is copyright Steinberg Media Technologies GmbH and licensed under the
+SIL Open Font License. See Bravura-OFL.txt in this folder.
+
+Fredoka and ZCOOL KuaiLe are from Google Fonts and are licensed under the
+SIL Open Font License.

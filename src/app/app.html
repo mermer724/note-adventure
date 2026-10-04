@@ -1,0 +1,535 @@
+<div class="sky">
+  <div class="cloud cloud-a" aria-hidden="true"></div>
+  <div class="cloud cloud-b" aria-hidden="true"></div>
+  <div class="floaties" aria-hidden="true">
+    <span class="f1">♪</span>
+    <span class="f2">★</span>
+    <span class="f3">♫</span>
+    <span class="f4">✦</span>
+    <span class="f5">♪</span>
+  </div>
+
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <p class="eyebrow">给小朋友的五线谱</p>
+        <h1>音符小探险</h1>
+      </div>
+      <div class="header-actions">
+        @if (started()) {
+          <button type="button" class="home-btn" (click)="goHome()">首页</button>
+        }
+        @if (started() && mode() === 'timed') {
+          <div class="timer" [class.urgent]="secondsLeft() <= 10">
+            <small>还剩</small>
+            <strong>{{ clock() }}</strong>
+          </div>
+        }
+        @if (started()) {
+          <div class="score" [class.pop]="scorePop()">
+            <span class="star" aria-hidden="true">⭐</span>
+            <div>
+              <small>星星</small>
+              <strong>{{ score() }}</strong>
+            </div>
+            @if (phase() === 'correct') {
+              <em class="plus">+1</em>
+            }
+          </div>
+          <button type="button" class="restart" (click)="restart()">Restart</button>
+        }
+        <button
+          type="button"
+          class="mute"
+          (click)="toggleSound()"
+          [attr.aria-pressed]="soundOn()"
+          [attr.aria-label]="soundOn() ? '关闭声音' : '打开声音'"
+        >
+          {{ soundOn() ? '🔊' : '🔇' }}
+        </button>
+      </div>
+    </header>
+
+    <section class="hero">
+      @for (tick of [feedbackKey()]; track tick) {
+        <svg
+          class="mascot"
+          [class.large]="!started()"
+          [class.idle]="!started() || phase() === 'idle'"
+          [class.oops]="started() && phase() === 'try'"
+          [class.cheer]="started() && phase() === 'correct'"
+          viewBox="0 0 140 132"
+          aria-hidden="true"
+        >
+          <ellipse cx="46" cy="36" rx="13" ry="22" fill="#ffe7b8" stroke="#e3c48a" stroke-width="2" />
+          <ellipse cx="94" cy="36" rx="13" ry="22" fill="#ffe7b8" stroke="#e3c48a" stroke-width="2" />
+          <ellipse cx="46" cy="38" rx="6" ry="12" fill="#ffb7c8" />
+          <ellipse cx="94" cy="38" rx="6" ry="12" fill="#ffb7c8" />
+          <ellipse cx="70" cy="80" rx="42" ry="36" fill="#ffe7b8" stroke="#e3c48a" stroke-width="2" />
+          <ellipse cx="44" cy="88" rx="8" ry="5" fill="#ffb0c4" opacity="0.9" />
+          <ellipse cx="96" cy="88" rx="8" ry="5" fill="#ffb0c4" opacity="0.9" />
+          @if (started() && phase() === 'correct') {
+            <path d="M48 76 q8 -12 16 0" fill="none" stroke="#5c4570" stroke-width="3.2" stroke-linecap="round" />
+            <path d="M76 76 q8 -12 16 0" fill="none" stroke="#5c4570" stroke-width="3.2" stroke-linecap="round" />
+            <path d="M56 94 q14 14 28 0" fill="none" stroke="#5c4570" stroke-width="3.2" stroke-linecap="round" />
+          } @else if (started() && phase() === 'try') {
+            <circle cx="56" cy="76" r="5" fill="#5c4570" />
+            <circle cx="86" cy="76" r="5" fill="#5c4570" />
+            <ellipse cx="70" cy="96" rx="6" ry="7" fill="#5c4570" />
+          } @else {
+            <circle cx="56" cy="76" r="5" fill="#5c4570" />
+            <circle cx="86" cy="76" r="5" fill="#5c4570" />
+            <circle cx="57.4" cy="74.2" r="1.6" fill="#fff" />
+            <circle cx="87.4" cy="74.2" r="1.6" fill="#fff" />
+            <path d="M58 94 q12 10 24 0" fill="none" stroke="#5c4570" stroke-width="3.2" stroke-linecap="round" />
+          }
+          <path d="M70 112 l-16 9 5-11 -5-11 16 9 16-9 -5 11 5 11z" fill="#ff7aa2" />
+          <circle cx="70" cy="112" r="3.2" fill="#ffd1e2" />
+        </svg>
+      }
+
+      <div class="hero-copy">
+        @if (!started()) {
+          <h2>选一个玩法吧</h2>
+          <p>认识高音谱和低音谱。点对音符，就能得到星星。</p>
+        } @else {
+          @for (tick of [feedbackKey()]; track tick) {
+            <p
+              class="bubble"
+              [class.yay]="phase() === 'correct'"
+              [class.oops]="phase() === 'try'"
+            >
+              @if (phase() === 'correct') {
+                太棒了！
+              } @else if (phase() === 'try') {
+                再试一次哦
+              } @else {
+                这个音是什么呀？
+              }
+            </p>
+          }
+          <p class="rule">
+            @switch (mode()) {
+              @case ('timed') {
+                一分钟里，答对一题加一颗星星
+              }
+              @case ('challenge') {
+                答对加星星，答错就清零
+              }
+              @default {
+                答错可以再试，答对才下一题
+              }
+            }
+          </p>
+        }
+      </div>
+    </section>
+
+    @if (!started()) {
+      <section class="home">
+        <div class="modes">
+          <div class="mode-column">
+            <button type="button" class="mode-card timed" (click)="chooseMode('timed')">
+              <span class="mode-emoji" aria-hidden="true">⏱️</span>
+              <strong>一分钟</strong>
+              <span>看一分钟最多能得到多少星星</span>
+            </button>
+            <section class="board" aria-label="一分钟前三名">
+              <h3>前三名</h3>
+              @if (timedBoard().length === 0) {
+                <p class="empty-board">还没有成绩</p>
+              } @else {
+                <ol>
+                  @for (row of timedBoard(); track row.at; let i = $index) {
+                    <li>
+                      <span>第 {{ rankAt(timedBoard(), i) }} 名</span>
+                      <strong>⭐ {{ row.score }}</strong>
+                    </li>
+                  }
+                </ol>
+              }
+            </section>
+          </div>
+          <div class="mode-column">
+            <button type="button" class="mode-card challenge" (click)="chooseMode('challenge')">
+              <span class="mode-emoji" aria-hidden="true">🏁</span>
+              <strong>闯关</strong>
+              <span>答对加星星，答错就清零，重新开始</span>
+            </button>
+            <section class="board" aria-label="闯关前三名">
+              <h3>前三名</h3>
+              @if (challengeBoard().length === 0) {
+                <p class="empty-board">还没有成绩</p>
+              } @else {
+                <ol>
+                  @for (row of challengeBoard(); track row.at; let i = $index) {
+                    <li>
+                      <span>第 {{ rankAt(challengeBoard(), i) }} 名</span>
+                      <strong>⭐ {{ row.score }}</strong>
+                    </li>
+                  }
+                </ol>
+              }
+            </section>
+          </div>
+          <div class="mode-column">
+            <button type="button" class="mode-card normal" (click)="chooseMode('normal')">
+              <span class="mode-emoji" aria-hidden="true">🎵</span>
+              <strong>Normal</strong>
+              <span>答错可以再试，答对才下一题</span>
+              @if (normalStars() > 0) {
+                <em>已有 {{ normalStars() }} 颗星星</em>
+              }
+            </button>
+            <section class="board" aria-label="Normal前三名">
+              <h3>前三名</h3>
+              @if (normalBoard().length === 0) {
+                <p class="empty-board">还没有成绩</p>
+              } @else {
+                <ol>
+                  @for (row of normalBoard(); track row.at; let i = $index) {
+                    <li>
+                      <span>第 {{ rankAt(normalBoard(), i) }} 名</span>
+                      <strong>⭐ {{ row.score }}</strong>
+                    </li>
+                  }
+                </ol>
+              }
+            </section>
+          </div>
+        </div>
+      </section>
+    }
+
+    @if (started()) {
+      <section class="card" [class.bass]="question().clef === 'bass'">
+        <div class="card-tools">
+          <div class="clef-pill">
+            @if (question().clef === 'treble') {
+              <span aria-hidden="true">🐦</span>
+              <strong>高音</strong>
+            } @else {
+              <span aria-hidden="true">🐟</span>
+              <strong>低音</strong>
+            }
+          </div>
+          <button
+            type="button"
+            class="hint-btn"
+            (click)="toggleHint()"
+            [attr.aria-expanded]="hintOpen()"
+          >
+            {{ hintOpen() ? '收起提示' : '提示' }}
+          </button>
+        </div>
+
+        <svg class="staff" viewBox="0 36 540 340" role="img" [attr.aria-label]="staffLabel()">
+          <defs>
+            <radialGradient id="noteFill" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#c9b0ff" />
+              <stop offset="55%" stop-color="#7c4dff" />
+              <stop offset="100%" stop-color="#5b35d5" />
+            </radialGradient>
+            <radialGradient id="noteGold" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#fff1b0" />
+              <stop offset="55%" stop-color="#ffc43d" />
+              <stop offset="100%" stop-color="#f5a623" />
+            </radialGradient>
+          </defs>
+
+          <g class="lines">
+            @for (line of staffLines; track line) {
+              <line x1="28" x2="512" [attr.y1]="lineY(line)" [attr.y2]="lineY(line)" />
+            }
+            <line class="bar" x1="500" x2="500" [attr.y1]="lineY(4)" [attr.y2]="lineY(0)" />
+          </g>
+
+          <text
+            class="clef"
+            [class.bass-clef]="question().clef === 'bass'"
+            font-family="Bravura"
+            [attr.font-size]="clefSize"
+            x="48"
+            [attr.y]="clefBaseline()"
+          >{{ clefChar() }}</text>
+
+          @for (id of [round()]; track id) {
+            <g [attr.transform]="noteTransform()">
+              <g class="note-pop">
+                @for (step of ledgers(); track step) {
+                  <line
+                    class="ledger"
+                    x1="-26"
+                    x2="26"
+                    [attr.y1]="ledgerLocal(step)"
+                    [attr.y2]="ledgerLocal(step)"
+                  />
+                }
+                @if (stemDown()) {
+                  <line
+                    class="stem"
+                    x1="-12"
+                    y1="-8"
+                    x2="-12"
+                    [attr.y2]="stemLength"
+                    [attr.stroke]="phase() === 'correct' ? '#f5a623' : '#6a3de8'"
+                  />
+                } @else {
+                  <line
+                    class="stem"
+                    x1="12"
+                    y1="8"
+                    x2="12"
+                    [attr.y2]="-stemLength"
+                    [attr.stroke]="phase() === 'correct' ? '#f5a623' : '#6a3de8'"
+                  />
+                }
+                <ellipse
+                  class="head"
+                  rx="16"
+                  ry="11.5"
+                  transform="rotate(-20)"
+                  [attr.fill]="phase() === 'correct' ? 'url(#noteGold)' : 'url(#noteFill)'"
+                />
+              </g>
+            </g>
+          }
+        </svg>
+
+        <p class="hint">
+          @switch (mode()) {
+            @case ('timed') { 答对加一颗星星，时间到就结束 }
+            @case ('challenge') { 答错会清零，重新开始新的一轮 }
+            @default { 点对了，才会出现下一题 }
+          }
+        </p>
+      </section>
+
+      @if (hintOpen()) {
+        <section class="hint-board" aria-label="音符提示">
+          @for (card of hintCards(); track card.id) {
+            <article class="hint-card" [class.letters]="card.bigLetters">
+              <div class="hint-art" aria-hidden="true">
+                @switch (card.id) {
+                  @case ('face') {
+                    <svg viewBox="0 0 140 110">
+                      <circle cx="70" cy="58" r="40" fill="#ffe7b8" stroke="#e3c48a" stroke-width="3" />
+                      <path d="M38 40 q10 -22 18 -2" fill="#ffb7c8" />
+                      <path d="M84 36 q14 -20 22 2" fill="#ffb7c8" />
+                      <circle cx="54" cy="52" r="5.5" fill="#5c4570" />
+                      <circle cx="86" cy="52" r="5.5" fill="#5c4570" />
+                      <circle cx="56" cy="50" r="1.8" fill="#fff" />
+                      <circle cx="88" cy="50" r="1.8" fill="#fff" />
+                      <ellipse cx="44" cy="66" rx="7" ry="4.5" fill="#ffb0c4" />
+                      <ellipse cx="96" cy="66" rx="7" ry="4.5" fill="#ffb0c4" />
+                      <path d="M54 74 q16 16 32 0" fill="none" stroke="#5c4570" stroke-width="3.4" stroke-linecap="round" />
+                    </svg>
+                  }
+                  @case ('boy') {
+                    <svg viewBox="0 0 140 120">
+                      <ellipse cx="70" cy="110" rx="26" ry="6" fill="#efe4c2" />
+                      <path d="M58 70 h24 v26 a10 10 0 0 1 -24 0z" fill="#7ad7f5" />
+                      <rect x="54" y="92" width="10" height="16" rx="4" fill="#6d5a86" />
+                      <rect x="76" y="92" width="10" height="16" rx="4" fill="#6d5a86" />
+                      <circle cx="70" cy="46" r="22" fill="#ffe7b8" stroke="#e3c48a" stroke-width="2.5" />
+                      <path d="M50 40 q20 -28 40 0 q-6 8 -20 6 q-14 1 -20 -6z" fill="#8d6a45" />
+                      <circle cx="62" cy="48" r="3" fill="#5c4570" />
+                      <circle cx="80" cy="48" r="3" fill="#5c4570" />
+                      <path d="M62 58 q8 8 16 0" fill="none" stroke="#5c4570" stroke-width="2.6" stroke-linecap="round" />
+                      <path d="M102 62 l8 -10 3 8 -9 5z" fill="#ffd166" />
+                    </svg>
+                  }
+                  @case ('cows') {
+                    <svg viewBox="0 0 180 110">
+                      <ellipse cx="90" cy="96" rx="78" ry="12" fill="#b6e86a" />
+                      <path d="M24 92 q6 -16 12 0 q6 -18 12 0 q6 -14 12 0" fill="#7dce45" />
+                      <path d="M118 94 q6 -16 12 0 q6 -18 12 0 q6 -12 12 0" fill="#7dce45" />
+                      <g>
+                        <ellipse cx="58" cy="70" rx="28" ry="16" fill="#fff" stroke="#e3c48a" stroke-width="2" />
+                        <circle cx="46" cy="66" r="5" fill="#f3c7a0" />
+                        <circle cx="68" cy="74" r="4" fill="#f3c7a0" />
+                        <ellipse cx="32" cy="58" rx="13" ry="11" fill="#fff" stroke="#e3c48a" stroke-width="2" />
+                        <circle cx="28" cy="56" r="1.8" fill="#5c4570" />
+                        <ellipse cx="18" cy="62" rx="5" ry="3.2" fill="#ffb7c8" />
+                        <path d="M24 48 l-3 -9" stroke="#e3c48a" stroke-width="2.4" stroke-linecap="round" />
+                        <path d="M36 48 l3 -9" stroke="#e3c48a" stroke-width="2.4" stroke-linecap="round" />
+                      </g>
+                      <g>
+                        <ellipse cx="128" cy="74" rx="24" ry="14" fill="#fff" stroke="#e3c48a" stroke-width="2" />
+                        <circle cx="118" cy="70" r="4.5" fill="#d8b48a" />
+                        <circle cx="138" cy="78" r="3.5" fill="#d8b48a" />
+                        <ellipse cx="150" cy="64" rx="11" ry="9" fill="#fff" stroke="#e3c48a" stroke-width="2" />
+                        <circle cx="154" cy="62" r="1.6" fill="#5c4570" />
+                        <ellipse cx="162" cy="68" rx="4.5" ry="3" fill="#ffb7c8" />
+                        <path d="M146 54 l-2 -8" stroke="#e3c48a" stroke-width="2.2" stroke-linecap="round" />
+                        <path d="M156 54 l2 -8" stroke="#e3c48a" stroke-width="2.2" stroke-linecap="round" />
+                      </g>
+                    </svg>
+                  }
+                  @case ('boys') {
+                    <svg viewBox="0 0 200 110">
+                      <g transform="translate(34 8)">
+                        <path d="M8 48 h20 v22 a8 8 0 0 1 -20 0z" fill="#ff9eb8" />
+                        <rect x="6" y="66" width="8" height="14" rx="3" fill="#6d5a86" />
+                        <rect x="22" y="66" width="8" height="14" rx="3" fill="#6d5a86" />
+                        <circle cx="18" cy="28" r="16" fill="#ffe7b8" stroke="#e3c48a" stroke-width="2" />
+                        <path d="M6 24 q12 -18 24 0 q-4 6 -12 4 q-8 1 -12 -4z" fill="#8d6a45" />
+                        <circle cx="12" cy="28" r="2.2" fill="#5c4570" />
+                        <circle cx="24" cy="28" r="2.2" fill="#5c4570" />
+                        <path d="M12 36 q6 6 12 0" fill="none" stroke="#5c4570" stroke-width="2" stroke-linecap="round" />
+                      </g>
+                      <g transform="translate(82 4)">
+                        <path d="M8 50 h22 v24 a9 9 0 0 1 -22 0z" fill="#7ad7f5" />
+                        <rect x="6" y="70" width="8" height="16" rx="3" fill="#6d5a86" />
+                        <rect x="24" y="70" width="8" height="16" rx="3" fill="#6d5a86" />
+                        <circle cx="19" cy="28" r="17" fill="#ffe7b8" stroke="#e3c48a" stroke-width="2" />
+                        <path d="M6 24 q13 -20 26 0 q-4 6 -13 4 q-9 1 -13 -4z" fill="#5c4030" />
+                        <circle cx="13" cy="28" r="2.3" fill="#5c4570" />
+                        <circle cx="25" cy="28" r="2.3" fill="#5c4570" />
+                        <path d="M13 36 q6 6 12 0" fill="none" stroke="#5c4570" stroke-width="2" stroke-linecap="round" />
+                      </g>
+                      <g transform="translate(136 10)">
+                        <path d="M8 46 h18 v20 a8 8 0 0 1 -18 0z" fill="#ffe56a" />
+                        <rect x="6" y="62" width="7" height="13" rx="3" fill="#6d5a86" />
+                        <rect x="20" y="62" width="7" height="13" rx="3" fill="#6d5a86" />
+                        <circle cx="17" cy="26" r="15" fill="#ffe7b8" stroke="#e3c48a" stroke-width="2" />
+                        <path d="M6 22 q11 -16 22 0 q-4 5 -11 4 q-8 1 -11 -4z" fill="#c47b4a" />
+                        <circle cx="12" cy="26" r="2" fill="#5c4570" />
+                        <circle cx="22" cy="26" r="2" fill="#5c4570" />
+                        <path d="M12 33 q5 5 10 0" fill="none" stroke="#5c4570" stroke-width="2" stroke-linecap="round" />
+                      </g>
+                    </svg>
+                  }
+                }
+              </div>
+              <p class="hint-kind">{{ card.kind }} · 从下往上</p>
+              <p class="mnemonic">
+                @for (word of card.words; track $index) {
+                  <span class="word"><b [style.color]="letterColor(word.initial)">{{ word.initial }}</b>{{ word.rest }}</span>
+                }
+              </p>
+              <svg class="mini-staff" viewBox="0 0 220 168" aria-hidden="true">
+                @for (line of staffLines; track line) {
+                  <line x1="24" x2="186" [attr.y1]="miniLineY(line)" [attr.y2]="miniLineY(line)" />
+                }
+                @for (mark of card.marks; track mark.step) {
+                  <circle
+                    cx="106"
+                    [attr.cy]="miniNoteY(mark.step)"
+                    r="8"
+                    [attr.fill]="letterColor(mark.letter)"
+                  />
+                  <text x="106" [attr.y]="miniNoteY(mark.step)" text-anchor="middle" dominant-baseline="central">
+                    {{ mark.letter }}
+                  </text>
+                }
+              </svg>
+            </article>
+          }
+        </section>
+      }
+
+      <section class="choices" aria-label="选择音符">
+        @for (note of letters; track note.id) {
+          <button
+            type="button"
+            class="note-btn"
+            [class.missed]="isWrong(note.id)"
+            [class.got]="phase() === 'correct' && question().letter === note.id"
+            [disabled]="
+              isWrong(note.id) || phase() === 'correct' || !!notice() || (mode() === 'timed' && secondsLeft() === 0)
+            "
+            [style.--btn]="note.color"
+            [attr.aria-label]="'音符 ' + note.id + ' ' + note.solfege"
+            (click)="pick(note.id)"
+          >
+            <span class="letter">{{ note.id }}</span>
+            <span class="solfege">{{ note.solfege }}</span>
+          </button>
+        }
+      </section>
+      <section class="board compact" aria-label="前三名">
+        <h3>前三名</h3>
+        @if (activeBoard().length === 0) {
+          <p class="empty-board">还没有成绩</p>
+        } @else {
+          <ol>
+            @for (row of activeBoard(); track row.at; let i = $index) {
+              <li>
+                <span>第 {{ rankAt(activeBoard(), i) }} 名</span>
+                <strong>⭐ {{ row.score }}</strong>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+    }
+  </main>
+
+  @if (notice(); as note) {
+    <div class="modal-back" role="dialog" aria-modal="true">
+      <div class="modal">
+        @switch (note.kind) {
+          @case ('wipe') {
+            <h2>星星清零啦</h2>
+            <p>答错了，这一轮重新开始。</p>
+            @if (note.score > 0) {
+              <p>这一轮得到了 {{ note.score }} 颗星星。</p>
+            }
+            @if (note.rank) {
+              <p class="rank-line">恭喜！第 {{ note.rank }} 名</p>
+            }
+            <div class="modal-actions">
+              <button type="button" class="go" (click)="dismissNotice()">知道啦</button>
+              <button type="button" class="ghost" (click)="goHome()">回首页</button>
+            </div>
+          }
+          @case ('rank') {
+            <h2>恭喜！</h2>
+            <p>你得到了 {{ note.score }} 颗星星</p>
+            <p class="rank-line">第 {{ note.rank }} 名</p>
+            <div class="modal-actions">
+              <button type="button" class="go" (click)="dismissNotice()">知道啦</button>
+            </div>
+          }
+          @case ('confirm-restart') {
+            <h2>重新开始吗？</h2>
+            <p>
+              @if (mode() === 'timed') {
+                这一分钟会重来，星星会清零。
+              } @else {
+                星星会清零，重新开始新的一轮。
+              }
+            </p>
+            <div class="modal-actions">
+              <button type="button" class="ghost" (click)="cancelRestart()">再想想</button>
+              <button type="button" class="go" (click)="confirmRestart()">清零重来</button>
+            </div>
+          }
+          @case ('timeup') {
+            <h2>时间到！</h2>
+            <p>这一分钟你答对了</p>
+            <p class="rank-line">{{ note.score }} 题</p>
+            @if (note.rank) {
+              <p class="rank-line">恭喜！第 {{ note.rank }} 名</p>
+            }
+            <div class="modal-actions">
+              <button type="button" class="go" (click)="playAgain()">再来一分钟</button>
+              <button type="button" class="ghost" (click)="goHome()">回首页</button>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+
+  @for (piece of confetti(); track piece.id) {
+    <span
+      class="confetti"
+      [style.left.%]="piece.left"
+      [style.background]="piece.color"
+      [style.animation-delay.s]="piece.delay"
+      [style.--drift.px]="piece.drift"
+    ></span>
+  }
+</div>

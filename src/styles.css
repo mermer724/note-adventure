@@ -1,0 +1,58 @@
+@font-face {
+  font-family: Fredoka;
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/Fredoka-600.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: Fredoka;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Fredoka-700.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'ZCOOL KuaiLe';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ZCOOLKuaiLe.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: Bravura;
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/Bravura.woff2') format('woff2');
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'ZCOOL KuaiLe', Fredoka, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background:
+    radial-gradient(circle at 12% 18%, #fff 0 70px, transparent 72px),
+    radial-gradient(circle at 88% 8%, #fff7c8 0 90px, transparent 92px),
+    linear-gradient(180deg, #fff0f7 0%, #e7f6ff 52%, #fff8df 100%);
+  color: #5c4570;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #ffd0e4;
+}
